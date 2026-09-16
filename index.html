@@ -93,7 +93,7 @@
       min-height: 24px;
     }
 
-    /* Optional transcript check area */
+    /* Self-check transcript area */
     .transcript-box {
       margin-top: 25px;
       border-top: 2px dashed #E0E0E0;
@@ -155,57 +155,58 @@
   </div>
 
   <script>
-    // Pool of sentences extracted from the provided text
+    // Pool of sentences broken into meaningful chunks for dictation pauses
     const sentencePool = [
-      "Jessie and Andy are reading a vox pop article in Kidz Magazine.",
-      "An important part of growing up is becoming more independent.",
-      "We asked some primary students for their opinions.",
-      "I can do lots of things by myself these days.",
-      "This year, my friend and I started to take the minibus to school by ourselves.",
-      "When I was in kindergarten, I could carry my school bag by myself.",
-      "When I was in Primary One, I could pack my school bag by myself.",
-      "Although Mum sometimes repacked it for me, I was willing to learn.",
-      "I think I'm quite independent now.",
-      "I need to be independent because Mum and Dad travel a lot.",
-      "When I was four, I could button my clothes and tie my shoelaces by myself.",
-      "No one else in my class could do the same.",
-      "I could also brush my hair by myself.",
-      "My brother and I could both have a shower by ourselves when we started primary school.",
-      "When I was seven, I could prepare a meal by myself.",
-      "I often made sandwiches for my brother and myself.",
-      "I think it's important to be independent.",
-      "It's time for me to learn to organize my own study schedule.",
-      "I can do more things by myself now than I could last year.",
-      "When I was in kindergarten, I couldn't eat with chopsticks.",
-      "My helper fed me, but I preferred using a spoon by myself.",
-      "Now I can feed myself.",
-      "I'm a bit messy, but that's not too bad.",
-      "I can also have a shower by myself these days.",
-      "When I was little, I couldn't button my clothes.",
-      "I was a little bit clumsy and my fingers worked slowly.",
-      "Dad always had to button them for me.",
-      "I couldn't do up a zip either.",
-      "Now I can do all these things.",
-      "I'm learning to be independent and I think I'm doing quite well."
+      ["Jessie and Andy", "are reading a vox pop article", "in Kidz Magazine."],
+      ["An important part of growing up", "is becoming more independent."],
+      ["We asked some primary students", "for their opinions."],
+      ["I can do lots of things", "by myself these days."],
+      ["This year,", "my friend and I", "started to take the minibus to school", "by ourselves."],
+      ["When I was in kindergarten,", "I could carry my school bag", "by myself."],
+      ["When I was in Primary One,", "I could pack my school bag", "by myself."],
+      ["Although Mum sometimes repacked it for me,", "I was willing to learn."],
+      ["I think", "I'm quite independent now."],
+      ["I need to be independent", "because Mum and Dad travel a lot."],
+      ["When I was four,", "I could button my clothes", "and tie my shoelaces by myself."],
+      ["No one else in my class", "could do the same."],
+      ["I could also brush my hair", "by myself."],
+      ["My brother and I", "could both have a shower by ourselves", "when we started primary school."],
+      ["When I was seven,", "I could prepare a meal", "by myself."],
+      ["I often made sandwiches", "for my brother and myself."],
+      ["I think it's important", "to be independent."],
+      ["It's time for me", "to learn to organize", "my own study schedule."],
+      ["I can do more things by myself now", "than I could last year."],
+      ["When I was in kindergarten,", "I couldn't eat with chopsticks."],
+      ["My helper fed me,", "but I preferred using a spoon", "by myself."],
+      ["Now I can feed myself."],
+      ["I'm a bit messy,", "but that's not too bad."],
+      ["I can also have a shower", "by myself these days."],
+      ["When I was little,", "I couldn't button my clothes."],
+      ["I was a little bit clumsy", "and my fingers worked slowly."],
+      ["Dad always had to button them for me."],
+      ["I couldn't do up a zip either."],
+      ["Now I can do all these things."],
+      ["I'm learning to be independent", "and I think I'm doing quite well."]
     ];
 
-    let currentParagraph = "";
+    let currentParagraphSentences = [];
     const synth = window.speechSynthesis;
+    let isPlaying = false;
+    let currentTimeout = null;
 
-    // Helper function to count words in a text
-    function countWords(str) {
-      return str.trim().split(/\s+/).length;
+    // Helper function to count words in a sentence array
+    function countSentenceWords(sentence) {
+      return sentence.join(" ").trim().split(/\s+/).length;
     }
 
-    // Generate a random paragraph of approximately 100 words
+    // Generate a random paragraph of ~100 words
     function generateParagraph() {
       let shuffled = [...sentencePool].sort(() => 0.5 - Math.random());
       let selectedSentences = [];
       let totalWords = 0;
 
       for (let sentence of shuffled) {
-        let wordCount = countWords(sentence);
-        // Stop adding once we reach ~90 to 110 words
+        let wordCount = countSentenceWords(sentence);
         if (totalWords + wordCount > 115) {
           break;
         }
@@ -216,72 +217,127 @@
         }
       }
 
-      currentParagraph = selectedSentences.join(" ");
-      document.getElementById("transcript-text").innerText = currentParagraph;
+      currentParagraphSentences = selectedSentences;
+
+      // Render full paragraph string for transcript
+      const fullText = currentParagraphSentences
+        .map(s => s.join(" "))
+        .join(" ");
+      
+      document.getElementById("transcript-text").innerText = fullText;
     }
 
-    // Speak the current paragraph using Web Speech API
-    function speakText(text) {
-      if (synth.speaking) {
-        synth.cancel(); // Stop current audio if playing
-      }
-
-      if (!text) return;
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.85; // Slightly slower speed ideal for dictation practice
-      utterance.lang = 'en-US';
-
-      document.getElementById("status").innerText = "🔊 Playing audio...";
-
-      utterance.onend = function() {
-        document.getElementById("status").innerText = "✅ Finished playing.";
-      };
-
-      utterance.onerror = function() {
-        document.getElementById("status").innerText = "⚠️ Audio playback error.";
-      };
-
-      synth.speak(utterance);
-    }
-
-    // Event handler for Play button
-    function playAudio() {
-      if (!currentParagraph) {
-        generateParagraph();
-      }
-      speakText(currentParagraph);
-    }
-
-    // Event handler for Replay button
-    function replayAudio() {
-      if (!currentParagraph) {
-        generateParagraph();
-      }
-      speakText(currentParagraph);
-    }
-
-    // Event handler for Refresh button
-    function refreshParagraph() {
-      generateParagraph();
-      document.getElementById("status").innerText = "🔄 New paragraph generated. Click Play to listen!";
+    // Stop current speech and clear active timers
+    function stopSpeech() {
       if (synth.speaking) {
         synth.cancel();
       }
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
+        currentTimeout = null;
+      }
+      isPlaying = false;
     }
 
-    // Show or hide transcript
+    // Speak sequence with 1s chunk pause & 2s sentence pause
+    function speakSequence(sentences) {
+      stopSpeech();
+      if (!sentences || sentences.length === 0) return;
+
+      isPlaying = true;
+      document.getElementById("status").innerText = "🔊 Playing dictation...";
+
+      // Flatten items: item = { text, delayAfter }
+      let queue = [];
+      sentences.forEach((sentence, sIdx) => {
+        const isLastSentence = (sIdx === sentences.length - 1);
+
+        sentence.forEach((chunk, cIdx) => {
+          const isLastChunk = (cIdx === sentence.length - 1);
+          
+          let pauseTime = 1000; // 1 second between chunks
+          if (isLastChunk) {
+            pauseTime = 2000; // 2 seconds between sentences
+          }
+          if (isLastSentence && isLastChunk) {
+            pauseTime = 0; // End of paragraph
+          }
+
+          queue.push({
+            text: chunk,
+            delayAfter: pauseTime
+          });
+        });
+      });
+
+      let index = 0;
+
+      function speakNextItem() {
+        if (!isPlaying || index >= queue.length) {
+          isPlaying = false;
+          document.getElementById("status").innerText = "✅ Finished playing.";
+          return;
+        }
+
+        const currentItem = queue[index];
+        const utterance = new SpeechSynthesisUtterance(currentItem.text);
+        utterance.rate = 0.7; // Slowed down reading speed
+        utterance.lang = 'en-US';
+
+        utterance.onend = function() {
+          if (!isPlaying) return;
+          index++;
+          if (index < queue.length) {
+            currentTimeout = setTimeout(() => {
+              speakNextItem();
+            }, currentItem.delayAfter);
+          } else {
+            isPlaying = false;
+            document.getElementById("status").innerText = "✅ Finished playing.";
+          }
+        };
+
+        utterance.onerror = function() {
+          isPlaying = false;
+          document.getElementById("status").innerText = "⚠️ Audio playback error.";
+        };
+
+        synth.speak(utterance);
+      }
+
+      speakNextItem();
+    }
+
+    function playAudio() {
+      if (currentParagraphSentences.length === 0) {
+        generateParagraph();
+      }
+      speakSequence(currentParagraphSentences);
+    }
+
+    function replayAudio() {
+      if (currentParagraphSentences.length === 0) {
+        generateParagraph();
+      }
+      speakSequence(currentParagraphSentences);
+    }
+
+    function refreshParagraph() {
+      stopSpeech();
+      generateParagraph();
+      document.getElementById("status").innerText = "🔄 New paragraph generated. Click Play to listen!";
+    }
+
     function toggleTranscript() {
       const box = document.getElementById("transcript-text");
       if (box.style.display === "block") {
         box.style.display = "none";
       } else {
-        if (!currentParagraph) generateParagraph();
+        if (currentParagraphSentences.length === 0) generateParagraph();
         box.style.display = "block";
       }
     }
 
-    // Initialize with a paragraph on load
     window.onload = function() {
       generateParagraph();
     };
