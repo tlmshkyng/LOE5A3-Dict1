@@ -155,38 +155,38 @@
   </div>
 
   <script>
-    // Pool of sentences broken into meaningful chunks for dictation pauses
+    // Pool of sentences broken into chunks of MAX 5 WORDS each
     const sentencePool = [
-      ["Jessie and Andy", "are reading a vox pop article", "in Kidz Magazine."],
-      ["An important part of growing up", "is becoming more independent."],
+      ["Jessie and Andy", "are reading a vox pop", "article in Kidz Magazine."],
+      ["An important part", "of growing up", "is becoming more independent."],
       ["We asked some primary students", "for their opinions."],
-      ["I can do lots of things", "by myself these days."],
-      ["This year,", "my friend and I", "started to take the minibus to school", "by ourselves."],
-      ["When I was in kindergarten,", "I could carry my school bag", "by myself."],
-      ["When I was in Primary One,", "I could pack my school bag", "by myself."],
-      ["Although Mum sometimes repacked it for me,", "I was willing to learn."],
-      ["I think", "I'm quite independent now."],
-      ["I need to be independent", "because Mum and Dad travel a lot."],
-      ["When I was four,", "I could button my clothes", "and tie my shoelaces by myself."],
-      ["No one else in my class", "could do the same."],
-      ["I could also brush my hair", "by myself."],
-      ["My brother and I", "could both have a shower by ourselves", "when we started primary school."],
+      ["I can do lots", "of things by myself", "these days."],
+      ["This year,", "my friend and I", "started to take", "the minibus to school", "by ourselves."],
+      ["When I was", "in kindergarten,", "I could carry", "my school bag", "by myself."],
+      ["When I was", "in Primary One,", "I could pack", "my school bag", "by myself."],
+      ["Although Mum sometimes", "repacked it for me,", "I was willing", "to learn."],
+      ["I think I'm", "quite independent now."],
+      ["I need to be", "independent", "because Mum and Dad", "travel a lot."],
+      ["When I was four,", "I could button my clothes", "and tie my shoelaces", "by myself."],
+      ["No one else", "in my class", "could do the same."],
+      ["I could also brush", "my hair by myself."],
+      ["My brother and I", "could both have", "a shower by ourselves", "when we started", "primary school."],
       ["When I was seven,", "I could prepare a meal", "by myself."],
       ["I often made sandwiches", "for my brother and myself."],
       ["I think it's important", "to be independent."],
       ["It's time for me", "to learn to organize", "my own study schedule."],
-      ["I can do more things by myself now", "than I could last year."],
-      ["When I was in kindergarten,", "I couldn't eat with chopsticks."],
-      ["My helper fed me,", "but I preferred using a spoon", "by myself."],
+      ["I can do more things", "by myself now", "than I could last year."],
+      ["When I was", "in kindergarten,", "I couldn't eat", "with chopsticks."],
+      ["My helper fed me,", "but I preferred", "using a spoon by myself."],
       ["Now I can feed myself."],
       ["I'm a bit messy,", "but that's not too bad."],
-      ["I can also have a shower", "by myself these days."],
+      ["I can also have", "a shower by myself", "these days."],
       ["When I was little,", "I couldn't button my clothes."],
-      ["I was a little bit clumsy", "and my fingers worked slowly."],
-      ["Dad always had to button them for me."],
-      ["I couldn't do up a zip either."],
-      ["Now I can do all these things."],
-      ["I'm learning to be independent", "and I think I'm doing quite well."]
+      ["I was a little bit", "clumsy and my fingers", "worked slowly."],
+      ["Dad always had to", "button them for me."],
+      ["I couldn't do up", "a zip either."],
+      ["Now I can do", "all these things."],
+      ["I'm learning to be", "independent and I think", "I'm doing quite well."]
     ];
 
     let currentParagraphSentences = [];
@@ -197,6 +197,17 @@
     // Helper function to count words in a sentence array
     function countSentenceWords(sentence) {
       return sentence.join(" ").trim().split(/\s+/).length;
+    }
+
+    // Convert punctuation marks to spoken words (ignoring apostrophes and hyphens)
+    function getSpokenText(text) {
+      return text
+        .replace(/,/g, " comma")
+        .replace(/\./g, " full stop")
+        .replace(/\?/g, " question mark")
+        .replace(/!/g, " exclamation mark")
+        .replace(/:/g, " colon")
+        .replace(/;/g, " semicolon");
     }
 
     // Generate a random paragraph of ~100 words
@@ -219,7 +230,7 @@
 
       currentParagraphSentences = selectedSentences;
 
-      // Render full paragraph string for transcript
+      // Render full paragraph text for display
       const fullText = currentParagraphSentences
         .map(s => s.join(" "))
         .join(" ");
@@ -247,7 +258,6 @@
       isPlaying = true;
       document.getElementById("status").innerText = "🔊 Playing dictation...";
 
-      // Flatten items: item = { text, delayAfter }
       let queue = [];
       sentences.forEach((sentence, sIdx) => {
         const isLastSentence = (sIdx === sentences.length - 1);
@@ -264,7 +274,8 @@
           }
 
           queue.push({
-            text: chunk,
+            originalText: chunk,
+            spokenText: getSpokenText(chunk),
             delayAfter: pauseTime
           });
         });
@@ -280,7 +291,7 @@
         }
 
         const currentItem = queue[index];
-        const utterance = new SpeechSynthesisUtterance(currentItem.text);
+        const utterance = new SpeechSynthesisUtterance(currentItem.spokenText);
         utterance.rate = 0.7; // Slowed down reading speed
         utterance.lang = 'en-US';
 
