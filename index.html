@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P5 LOE 5A3 Dict 1</title>
+  <style>
+    /* Pale yellow background */
+    body {
+      background-color: #FFFDE7;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    /* Centered Title at top */
+    h1 {
+      color: #2C3E50;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.2rem;
+    }
+
+    /* Main Container */
+    .card {
+      background-color: #FFFFFF;
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    /* Button Layout */
+    .controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    /* Sky blue buttons with white fonts */
+    button {
+      background-color: #4FC3F7; /* Sky Blue */
+      color: #FFFFFF;           /* White text */
+      border: none;
+      padding: 14px 28px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 30px;
+      cursor: pointer;
+      width: 85%;
+      max-width: 320px;
+      box-shadow: 0 4px 10px rgba(79, 195, 247, 0.3);
+      transition: transform 0.1s, background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #29B6F6;
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    /* Main Play button in the center */
+    #play-btn {
+      font-size: 1.3rem;
+      padding: 18px 36px;
+      background-color: #03A9F4;
+    }
+
+    #play-btn:hover {
+      background-color: #0288D1;
+    }
+
+    /* Status indicator */
+    .status {
+      margin: 20px 0 10px 0;
+      font-size: 1rem;
+      color: #555;
+      font-style: italic;
+      min-height: 24px;
+    }
+
+    /* Optional transcript check area */
+    .transcript-box {
+      margin-top: 25px;
+      border-top: 2px dashed #E0E0E0;
+      padding-top: 20px;
+      text-align: left;
+    }
+
+    .toggle-btn {
+      background-color: transparent;
+      color: #0288D1;
+      border: 1px solid #0288D1;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      box-shadow: none;
+      width: auto;
+      margin: 0 auto;
+      display: block;
+    }
+
+    .toggle-btn:hover {
+      background-color: #E1F5FE;
+      transform: none;
+    }
+
+    #transcript-text {
+      display: none;
+      margin-top: 15px;
+      padding: 15px;
+      background-color: #FAFAFA;
+      border-radius: 10px;
+      border: 1px solid #EEEEEE;
+      line-height: 1.6;
+      color: #333;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>P5 LOE 5A3 Dict 1</h1>
+
+  <div class="card">
+    <div class="controls">
+      <!-- Main Play Button -->
+      <button id="play-btn" onclick="playAudio()">▶ Play</button>
+      <!-- Replay Button -->
+      <button onclick="replayAudio()">🔄 Replay</button>
+      <!-- Refresh New Paragraph Button -->
+      <button onclick="refreshParagraph()">🔀 Refresh a New Paragraph</button>
+    </div>
+
+    <div class="status" id="status">Click "Play" to start dictation.</div>
+
+    <!-- Self-check section for students -->
+    <div class="transcript-box">
+      <button class="toggle-btn" onclick="toggleTranscript()">Eye Check (Show/Hide Text)</button>
+      <div id="transcript-text"></div>
+    </div>
+  </div>
+
+  <script>
+    // Pool of sentences extracted from the provided text
+    const sentencePool = [
+      "Jessie and Andy are reading a vox pop article in Kidz Magazine.",
+      "An important part of growing up is becoming more independent.",
+      "We asked some primary students for their opinions.",
+      "I can do lots of things by myself these days.",
+      "This year, my friend and I started to take the minibus to school by ourselves.",
+      "When I was in kindergarten, I could carry my school bag by myself.",
+      "When I was in Primary One, I could pack my school bag by myself.",
+      "Although Mum sometimes repacked it for me, I was willing to learn.",
+      "I think I'm quite independent now.",
+      "I need to be independent because Mum and Dad travel a lot.",
+      "When I was four, I could button my clothes and tie my shoelaces by myself.",
+      "No one else in my class could do the same.",
+      "I could also brush my hair by myself.",
+      "My brother and I could both have a shower by ourselves when we started primary school.",
+      "When I was seven, I could prepare a meal by myself.",
+      "I often made sandwiches for my brother and myself.",
+      "I think it's important to be independent.",
+      "It's time for me to learn to organize my own study schedule.",
+      "I can do more things by myself now than I could last year.",
+      "When I was in kindergarten, I couldn't eat with chopsticks.",
+      "My helper fed me, but I preferred using a spoon by myself.",
+      "Now I can feed myself.",
+      "I'm a bit messy, but that's not too bad.",
+      "I can also have a shower by myself these days.",
+      "When I was little, I couldn't button my clothes.",
+      "I was a little bit clumsy and my fingers worked slowly.",
+      "Dad always had to button them for me.",
+      "I couldn't do up a zip either.",
+      "Now I can do all these things.",
+      "I'm learning to be independent and I think I'm doing quite well."
+    ];
+
+    let currentParagraph = "";
+    const synth = window.speechSynthesis;
+
+    // Helper function to count words in a text
+    function countWords(str) {
+      return str.trim().split(/\s+/).length;
+    }
+
+    // Generate a random paragraph of approximately 100 words
+    function generateParagraph() {
+      let shuffled = [...sentencePool].sort(() => 0.5 - Math.random());
+      let selectedSentences = [];
+      let totalWords = 0;
+
+      for (let sentence of shuffled) {
+        let wordCount = countWords(sentence);
+        // Stop adding once we reach ~90 to 110 words
+        if (totalWords + wordCount > 115) {
+          break;
+        }
+        selectedSentences.push(sentence);
+        totalWords += wordCount;
+        if (totalWords >= 85) {
+          break;
+        }
+      }
+
+      currentParagraph = selectedSentences.join(" ");
+      document.getElementById("transcript-text").innerText = currentParagraph;
+    }
+
+    // Speak the current paragraph using Web Speech API
+    function speakText(text) {
+      if (synth.speaking) {
+        synth.cancel(); // Stop current audio if playing
+      }
+
+      if (!text) return;
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.85; // Slightly slower speed ideal for dictation practice
+      utterance.lang = 'en-US';
+
+      document.getElementById("status").innerText = "🔊 Playing audio...";
+
+      utterance.onend = function() {
+        document.getElementById("status").innerText = "✅ Finished playing.";
+      };
+
+      utterance.onerror = function() {
+        document.getElementById("status").innerText = "⚠️ Audio playback error.";
+      };
+
+      synth.speak(utterance);
+    }
+
+    // Event handler for Play button
+    function playAudio() {
+      if (!currentParagraph) {
+        generateParagraph();
+      }
+      speakText(currentParagraph);
+    }
+
+    // Event handler for Replay button
+    function replayAudio() {
+      if (!currentParagraph) {
+        generateParagraph();
+      }
+      speakText(currentParagraph);
+    }
+
+    // Event handler for Refresh button
+    function refreshParagraph() {
+      generateParagraph();
+      document.getElementById("status").innerText = "🔄 New paragraph generated. Click Play to listen!";
+      if (synth.speaking) {
+        synth.cancel();
+      }
+    }
+
+    // Show or hide transcript
+    function toggleTranscript() {
+      const box = document.getElementById("transcript-text");
+      if (box.style.display === "block") {
+        box.style.display = "none";
+      } else {
+        if (!currentParagraph) generateParagraph();
+        box.style.display = "block";
+      }
+    }
+
+    // Initialize with a paragraph on load
+    window.onload = function() {
+      generateParagraph();
+    };
+  </script>
+</body>
+</html>
